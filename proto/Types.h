@@ -1,7 +1,3 @@
-//
-// Created by joe on 11/20/18.
-//
-
 #ifndef MCPXY_TYPES_H
 #define MCPXY_TYPES_H
 
@@ -10,15 +6,16 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+#include <string>
+
+#include <boost/uuid/uuid.hpp>
 
 namespace mcpxy {
     namespace types {
-
-
         template<typename t>
         t swapper(t v);
 
-#if __BYTE_ORDER == BIG_ENDIAN
+#if BYTE_ORDER == BIG_ENDIAN
         template<>
         inline uint8_t swapper<uint8_t>(uint8_t v) { return v; }
 
@@ -30,8 +27,7 @@ namespace mcpxy {
 
         template<>
         inline uint64_t swapper<uint64_t>(uint64_t v) { return v; }
-#elseif __BYTE_ORDER == LITTLE_ENDIAN
-
+#elif BYTE_ORDER == LITTLE_ENDIAN
         template<>
         inline uint8_t swapper<uint8_t>(uint8_t v) { return v; }
 
@@ -44,7 +40,7 @@ namespace mcpxy {
         template<>
         inline uint64_t swapper<uint64_t>(uint64_t v) { return bswap_64(v); }
 #else
-#pragma "no definitions found for swapping endianness on this architecture"
+#error "no definitions found for swapping endianness on this architecture"
 #endif
 
         template<int n>
@@ -137,17 +133,26 @@ namespace mcpxy {
 
             auto t2 = *(VarintParameters<type>::unsigned_variant)(&t);
 
-            for (ssize_t writes = 0; t2 != 0 && writes < maxwrite; writes++) {
+            ssize_t writes;
+            for (writes = 0; t2 != 0 && writes < maxwrite; writes++) {
                 dat = (uint8_t)(t2 & 0x7f);
                 t2 >>= 7;
                 if (t2 != 0)
                     dat |= 0x80;
 
                 v[writes] = dat;
-            };
+            }
+
+            return writes;
         }
 
-        inline ssize_t readString()
+        ssize_t readString(dataspace<0> &v, ssize_t maxread, std::string &s);
+        ssize_t writeString(dataspace<0> &v, ssize_t maxwrite, std::string &s);
+
+        using uuid = boost::uuids::uuid;
+
+        void readUuid(dataspace<uuid::static_size()> &v, uuid &uid);
+        void writeUuid(dataspace<uuid::static_size()> &v, uuid &uid);
     }
 }
 
