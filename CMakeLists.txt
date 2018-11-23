@@ -27,8 +27,6 @@ add_subdirectory(${CMAKE_CURRENT_BINARY_DIR}/googletest-src
         ${CMAKE_CURRENT_BINARY_DIR}/googletest-build
         EXCLUDE_FROM_ALL)
 
-
-
 add_subdirectory(proto)
 
 add_executable(mcpxy main.cpp)
@@ -37,5 +35,5 @@ target_include_directories(mcpxy PUBLIC ${CMAKE_SOURCE_DIR})
 
 
 add_executable(mcpxy-test test.cpp)
-target_link_libraries(mcpxy-test gtest_main)
+target_link_libraries(mcpxy-test gmock_main)
 target_include_directories(mcpxy-test PUBLIC ${CMAKE_SOURCE_DIR})

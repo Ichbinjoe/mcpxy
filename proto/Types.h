@@ -102,6 +102,7 @@ namespace mcpxy {
 
         template<>
         class VarintParameters<int64_t> {
+        public:
             static const ssize_t maxbyte = 10;
             using unsigned_variant = uint64_t*;
         };
@@ -117,7 +118,7 @@ namespace mcpxy {
             size_t r = 0;
             do {
                 dat = v[r];
-                t |= ((dat & 0x7f) << (7 * r));
+                t |= (((type)(dat & 0x7f)) << (7 * r));
 
                 r++;
                 if (r > max)
@@ -128,20 +129,24 @@ namespace mcpxy {
         }
 
         template<typename type>
-        inline ssize_t writeVarint(dataspace<0> &v, ssize_t maxwrite, type& t) {
+        inline ssize_t writeVarint(dataspace<0> &v, ssize_t maxwrite, type t) {
             uint8_t dat;
 
-            auto t2 = *(VarintParameters<type>::unsigned_variant)(&t);
+            auto t2 = *reinterpret_cast<typename VarintParameters<type>::unsigned_variant>(&t);
 
-            ssize_t writes;
-            for (writes = 0; t2 != 0 && writes < maxwrite; writes++) {
+            ssize_t writes = 0;
+
+            do {
+                if (writes > maxwrite)
+                    return -1;
+
                 dat = (uint8_t)(t2 & 0x7f);
                 t2 >>= 7;
                 if (t2 != 0)
                     dat |= 0x80;
 
-                v[writes] = dat;
-            }
+                v[writes++] = dat;
+            } while (t2 != 0);
 
             return writes;
         }
